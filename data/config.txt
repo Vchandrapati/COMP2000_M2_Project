@@ -16,3 +16,4 @@ wand, 2
 magical mace, 1
 rock, 2
 wand, 1
+

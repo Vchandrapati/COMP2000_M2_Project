@@ -1,18 +1,19 @@
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Optional;
 
-public class Inventory {
-    private ArrayList<ItemInterface> stock;
-    private String searchBy;
+public class Inventory implements Iterable<ItemInterface> {
+    private final ArrayList<ItemInterface> stock;
+    private SearchStrategy searchBy;
 
     public Inventory() {
         stock = new ArrayList<>();
-        searchBy = "All";
+        searchBy = new AllSearchStrategy();
     }
 
     public Inventory(ArrayList<ItemInterface> startingStock) {
         stock = startingStock;
-        searchBy = "All";
+        searchBy = new AllSearchStrategy();
     }
 
     /**
@@ -62,18 +63,18 @@ public class Inventory {
      * @return index of `item` or empty optional if `item` not in stock
      */
     private Optional<Integer> indexOfItemByName(ItemDefinition item) {
-        for (int i = 0; i < stock.size(); i++) {
-            ItemInterface cur = stock.get(i);
-            if (cur.getName().equals(item.getName())) {
-                return Optional.of(i);
-            }
+        int index = 0;
+        for (ItemInterface cur : this) {
+            if (cur.getName().equals(item.getName()))
+                return Optional.of(index);
+
+            index++;
         }
         return Optional.empty();
     }
 
-    public void setSearch(String search) {
-        // You may wish to adjust this to facilitate the task 1 strategy pattern
-        searchBy = search;
+    public void setSearch(SearchStrategy strategy) {
+        this.searchBy = strategy;
     }
 
     /**
@@ -86,38 +87,12 @@ public class Inventory {
     public ArrayList<ItemInterface> searchItems(String searchTerm) {
         String term = searchTerm.toLowerCase();
         ArrayList<ItemInterface> result = new ArrayList<>(stock);  // ArrayList copy
-
-        if (searchBy.equals("All")) {
-            for (int i = 0; i < result.size(); i++) {
-                ItemInterface curItem = result.get(i);
-                if (!curItem.getName().contains(term) && !curItem.getDescription().contains(term)) {
-                    result.remove(i);
-                    i--;  // Go back to revisit current index on next run of loop
-                }
-            }
-        } else if (searchBy.equals("Name")) {
-            for (int i = 0; i < result.size(); i++) {
-                ItemInterface curItem = result.get(i);
-                if (!curItem.getName().contains(term)) {
-                    result.remove(i);
-                    i--;  // Go back to revisit current index on next run of loop
-                }
-            }
-        } else if (searchBy.equals("Description")) {
-            for (int i = 0; i < result.size(); i++) {
-                ItemInterface curItem = result.get(i);
-                if (!curItem.getDescription().contains(term)) {
-                    result.remove(i);
-                    i--;  // Go back to revisit current index on next run of loop
-                }
-            }
-        }
-        return result;
+        return searchBy.search(result, term);
     }
 
     public int qtyOf(ItemDefinition def) {
         int qty = 0;
-        for (ItemInterface item : stock) {
+        for (ItemInterface item : this) {
             if (item.getName().equals(def.getName())) {
                 qty++;
             }
@@ -128,9 +103,18 @@ public class Inventory {
     @Override
     public String toString() {
         String str = "";
-        for (ItemInterface item : stock) {
+        for (ItemInterface item : this) {
             str += item.toString() + "\n\n";
         }
         return str;
+    }
+
+    @Override
+    public InventoryIterator iterator() {
+        return new InventoryIterator(stock);
+    }
+
+    public boolean isEmpty() {
+        return stock.isEmpty();
     }
 }

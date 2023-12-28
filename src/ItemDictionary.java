@@ -29,7 +29,7 @@ public class ItemDictionary {
      * Returns an Optional container with the matching ItemDefinition if the
      * provided `itemName` is valid.
      * Returns an Optional empty if no definition is found.
-     * @param name
+     * @param itemName
      * @return Optional result.
      */
     public Optional<ItemDefinition> defByName(String itemName) {

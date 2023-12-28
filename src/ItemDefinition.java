@@ -1,4 +1,4 @@
-import java.util.Optional;
+import java.util.*;
 
 public class ItemDefinition {
     private String name;
@@ -16,7 +16,6 @@ public class ItemDefinition {
 
         // This may be helpful for the compsite pattern to find the appropriate item definitions
         ItemDictionary dict = ItemDictionary.get();
-
     }
 
     /**
@@ -24,11 +23,19 @@ public class ItemDefinition {
      * If the Item is made up of other items, then each sub-item should also be created.
      * @return An Item instance described by the ItemDefinition
      */
-    public Item create() {
-        Item item = new Item(this);
-        // An ItemDefinition for a craftable item might follow a similar pattern
-        // to how a craftable/composite item looks.
-        return item;
+    public ItemInterface create() {
+        ItemDictionary dict = ItemDictionary.get();
+        if(componentNames.length == 0)
+            return new Item(this);
+        else {
+            CompositeItem compositeItem = new CompositeItem(this);
+            List<String> componentNames = this.getComponentNames();
+
+            for(String component : componentNames)
+                dict.defByName(component).ifPresent(def -> compositeItem.addComponent(new Item(def)));
+
+            return compositeItem;
+        }
     }
 
     // ItemDefinition might "craft" and return an item, using items from some source inventory.
@@ -52,6 +59,10 @@ public class ItemDefinition {
             output += componentName + ", ";
         }
         return output;
+    }
+
+    public List<String> getComponentNames() {
+        return Collections.unmodifiableList(Arrays.asList(componentNames));
     }
 
     public boolean isBaseItemDef() {

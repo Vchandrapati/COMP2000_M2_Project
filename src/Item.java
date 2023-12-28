@@ -13,9 +13,7 @@ public class Item implements ItemInterface {
 
     @Override
     public double getWeight() {
-        double weight = definition.getWeight().orElse(0.0);
-        // If the item is made up of other items, we should find the sum of weights
-        return weight;
+        return definition.getWeight().orElse(0.0);
     }
 
     @Override

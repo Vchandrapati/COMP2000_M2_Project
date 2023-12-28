@@ -44,7 +44,7 @@ public class Reader {
         playerRead = false;
     }
 
-    public static App read(String filePath) {
+    public static App read(String filePath) throws ItemNotAvailableException {
         File file = new File(filePath);
         Scanner scanner = null;
         try {
@@ -69,7 +69,7 @@ public class Reader {
                 } else if (line.endsWith("store")) {
                     store = readStorage(scanner, itemDefinitions);
                 } else if (line.endsWith("player")) {
-                    player = readPlayer(scanner, itemDefinitions);
+                    player = readPlayer(scanner, itemDefinitions, store);
                 }
             }
         }
@@ -179,7 +179,7 @@ public class Reader {
     }
 
     // line format; {WEIGHT CAPACITY}, {ITEM NAME}, {QTY}, {ITEM NAME}, {QTY}, ...
-    private static Player readPlayer(Scanner sc, ArrayList<ItemDefinition> items) {
+    private static Player readPlayer(Scanner sc, ArrayList<ItemDefinition> items, Storage store) throws ItemNotAvailableException {
         if (Reader.playerRead) {
             System.err.println("Player written twice or more in data file");
             System.exit(0);
@@ -189,7 +189,18 @@ public class Reader {
         String name = System.getProperty("user.name");
         double carryCapacity = Double.valueOf(sc.nextLine());
         Inventory startingInventory = readStartingItems(sc, items);
-        return new Player(name, carryCapacity, startingInventory);
+        Player player = new Player(name, carryCapacity, startingInventory);
+        if(player.getCurrentWeight() > player.getCarryCapacity())
+            adjustStartingInventory(player, store);
+
+        return player;
+    }
+
+    private static void adjustStartingInventory(Player player, Storage store) throws ItemNotAvailableException {
+        while (player.getCurrentWeight() > player.getCarryCapacity() && !player.getInventory().isEmpty()) {
+            ItemInterface item = player.getInventory().iterator().next();
+            player.store(item, store);
+        }
     }
 
     /**
